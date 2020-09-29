@@ -11,6 +11,7 @@ const win = Dimensions.get('window');
 class ChartWeb extends Component {
     constructor(props){
         super(props);
+        this.webview = React.createRef();
 
         this.state={
             init:`<html>
@@ -44,6 +45,21 @@ class ChartWeb extends Component {
             end:`           );
                         });
                         </script>
+                        <script>
+                        document.addEventListener("message", function(data) {
+                            var incomingEvent = JSON.parse(data.data);
+                            var chart = $("#container").highcharts();
+
+                            switch (incomingEvent.TYPE){
+                                case "RELOAD_CHART":
+                                    chart.redraw();
+                                    break;
+                                case "X_AXIS_MOVE":
+                                    chart.xAxis[0].setExtremes(incomingEvent.DATA.min, incomingEvent.DATA.max);
+                                    break;
+                            }
+                          });
+                        </script>
                     </head>
                     <body>
                         <div id="container">
@@ -56,7 +72,6 @@ class ChartWeb extends Component {
             }
         }
     }
-
     // used to resize on orientation of display
     reRenderWebView = (e) => {
         this.setState({
@@ -64,7 +79,14 @@ class ChartWeb extends Component {
             width: e.nativeEvent.layout.width,
         })
     }
+    reRenderChart = (e) =>{
+        this.props.reRender();
+    }
 
+    sendMessageToChart = (msg) => {
+        console.log('inside rn component', msg);
+        this.webview.postMessage(msg);
+    }
     render() {
         let config = JSON.stringify(this.props.config, function (key, value) {//create string of json but if it detects function it uses toString()
             return (typeof value === 'function') ? value.toString() : value;
@@ -73,13 +95,15 @@ class ChartWeb extends Component {
 
         config = JSON.parse(config)
         let concatHTML = `${this.state.init}${flattenObject(config)}${this.state.end}`;
-        
+
         return (
           <View style={this.props.style}>
               <WebView
+                  incognito={true}
                   onLayout={this.reRenderWebView}
                   style={styles.full}
-                  source={{ html: concatHTML, baseUrl: 'web/' }}
+                  ref={WEBVIEW_REF => (this.webview = WEBVIEW_REF)}
+                  source={{ html: concatHTML }}
                   javaScriptEnabled={true}
                   domStorageEnabled={true}
                   scalesPageToFit={true}
