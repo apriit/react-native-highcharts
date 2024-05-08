@@ -6,17 +6,15 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-
 const win = Dimensions.get('window');
 class ChartWeb extends Component {
     constructor(props){
         super(props);
-        this.webview = React.createRef();
 
         this.state={
             init:`<html>
                     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0" />
-                    <style media="screen" type="text/css">     
+                    <style media="screen" type="text/css">
                     #container {
                         width:100%;
                         height:100%;
@@ -33,7 +31,7 @@ class ChartWeb extends Component {
                         <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
                         ${this.props.stock ? '<script src="https://code.highcharts.com/stock/highstock.js"></script>'
                                       : '<script src="https://code.highcharts.com/highcharts.js"></script>'}
-                         ${this.props.more ? '<script src="https://code.highcharts.com/highcharts-more.js"></script>'
+                        ${this.props.more ? '<script src="https://code.highcharts.com/highcharts-more.js"></script>'
                                       : ''}
                         ${this.props.guage ? '<script src="https://code.highcharts.com/modules/solid-gauge.js"></script>'
                                       : ''}
@@ -45,21 +43,6 @@ class ChartWeb extends Component {
             end:`           );
                         });
                         </script>
-                        <script>
-                        document.addEventListener("message", function(data) {
-                            var incomingEvent = JSON.parse(data.data);
-                            var chart = $("#container").highcharts();
-
-                            switch (incomingEvent.TYPE){
-                                case "RELOAD_CHART":
-                                    chart.redraw();
-                                    break;
-                                case "X_AXIS_MOVE":
-                                    chart.xAxis[0].setExtremes(incomingEvent.DATA.min, incomingEvent.DATA.max);
-                                    break;
-                            }
-                          });
-                        </script>
                     </head>
                     <body>
                         <div id="container">
@@ -69,25 +52,18 @@ class ChartWeb extends Component {
             Wlayout:{
                 height:win.height,
                 width:win.width
-            },
-            onWebViewLoaded: false,
+            }
         }
     }
+
     // used to resize on orientation of display
-    reRenderWebView = (e) => {
+    reRenderWebView(e) {
         this.setState({
             height: e.nativeEvent.layout.height,
             width: e.nativeEvent.layout.width,
         })
     }
-    reRenderChart = (e) =>{
-        this.props.reRender();
-    }
 
-    sendMessageToChart = (msg) => {
-        console.log('inside rn component', msg);
-        this.webview.postMessage(msg);
-    }
     render() {
         let config = JSON.stringify(this.props.config, function (key, value) {//create string of json but if it detects function it uses toString()
             return (typeof value === 'function') ? value.toString() : value;
@@ -96,23 +72,18 @@ class ChartWeb extends Component {
 
         config = JSON.parse(config)
         let concatHTML = `${this.state.init}${flattenObject(config)}${this.state.end}`;
-
+        
         return (
-          <View style={[this.props.style, {opacity: this.state.onWebViewLoaded ? 1 : 0}]}>
+          <View style={this.props.style}>
               <WebView
-                  incognito={true}
                   onLayout={this.reRenderWebView}
                   style={styles.full}
-                  ref={WEBVIEW_REF => (this.webview = WEBVIEW_REF)}
-                  source={{ html: concatHTML }}
+                  source={{ html: concatHTML, baseUrl: 'web/' }}
                   javaScriptEnabled={true}
                   domStorageEnabled={true}
                   scalesPageToFit={true}
                   scrollEnabled={false}
                   automaticallyAdjustContentInsets={true}
-                  onLoad={() => setTimeout(() => {
-                    this.setState({onWebViewLoaded: true})}, 50)
-                   }
                   {...this.props}
               />
           </View>

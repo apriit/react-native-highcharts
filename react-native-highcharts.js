@@ -16,7 +16,7 @@ class ChartWeb extends Component {
         this.state={
             init:`<html>
                     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0" />
-                    <style media="screen" type="text/css">
+                    <style media="screen" type="text/css">     
                     #container {
                         width:100%;
                         height:100%;
@@ -33,7 +33,7 @@ class ChartWeb extends Component {
                         <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
                         ${this.props.stock ? '<script src="https://code.highcharts.com/stock/highstock.js"></script>'
                                       : '<script src="https://code.highcharts.com/highcharts.js"></script>'}
-                        ${this.props.more ? '<script src="https://code.highcharts.com/highcharts-more.js"></script>'
+                         ${this.props.more ? '<script src="https://code.highcharts.com/highcharts-more.js"></script>'
                                       : ''}
                         ${this.props.guage ? '<script src="https://code.highcharts.com/modules/solid-gauge.js"></script>'
                                       : ''}
@@ -69,7 +69,8 @@ class ChartWeb extends Component {
             Wlayout:{
                 height:win.height,
                 width:win.width
-            }
+            },
+            onWebViewLoaded: false,
         }
     }
     // used to resize on orientation of display
@@ -97,7 +98,7 @@ class ChartWeb extends Component {
         let concatHTML = `${this.state.init}${flattenObject(config)}${this.state.end}`;
 
         return (
-          <View style={this.props.style}>
+          <View style={[this.props.style, {opacity: this.state.onWebViewLoaded ? 1 : 0}]}>
               <WebView
                   incognito={true}
                   onLayout={this.reRenderWebView}
@@ -109,6 +110,9 @@ class ChartWeb extends Component {
                   scalesPageToFit={true}
                   scrollEnabled={false}
                   automaticallyAdjustContentInsets={true}
+                  onLoad={() => setTimeout(() => {
+                    this.setState({onWebViewLoaded: true})}, 50)
+                   }
                   {...this.props}
               />
           </View>
